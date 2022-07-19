@@ -109,7 +109,7 @@ func (t *TokenHolder) SetValidExpiredDuration(duration time.Duration) {
 	atomic.StoreInt64(&t.validExpiredDuration, int64(duration))
 }
 
-func (t *TokenHolder) Start(validTimeDuration time.Duration, tokenLength int, hash hash.Hash) {
+func (t *TokenHolder) Start(validTimeDuration time.Duration, checkTokenDuration time.Duration, tokenLength int, hash hash.Hash) {
 	t.m.Lock()
 	rand.Seed(time.Now().UnixNano() + int64(os.Getpid()))
 	t.SetValidExpiredDuration(validTimeDuration)
@@ -120,9 +120,9 @@ func (t *TokenHolder) Start(validTimeDuration time.Duration, tokenLength int, ha
 	t.ctx, t.cancel = context.WithCancel(context.Background())
 	t.tokens = make(map[string]time.Time)
 	if t.cleanupTicker == nil {
-		t.cleanupTicker = time.NewTicker(validTimeDuration)
+		t.cleanupTicker = time.NewTicker(checkTokenDuration)
 	} else {
-		t.cleanupTicker.Reset(validTimeDuration)
+		t.cleanupTicker.Reset(checkTokenDuration)
 	}
 	t.hashImpl = hash
 	t.hashFunc = func(token string) string {
